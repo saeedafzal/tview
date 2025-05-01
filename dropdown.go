@@ -553,14 +553,20 @@ func (d *DropDown) InputHandler() func(event *tcell.EventKey, setFocus func(p Pr
 				handler(event, setFocus)
 			}
 		case tcell.KeyEscape, tcell.KeyTab, tcell.KeyBacktab:
-			// Done selecting.
-			if d.done != nil {
-				d.done(key)
+			if d.open && (key == tcell.KeyTab || key == tcell.KeyBacktab) {
+				if handler := d.list.InputHandler(); handler != nil {
+					handler(event, setFocus)
+				}
+			} else {
+				// Done selecting.
+				if d.done != nil {
+					d.done(key)
+				}
+				if d.finished != nil {
+					d.finished(key)
+				}
+				d.closeList(setFocus)
 			}
-			if d.finished != nil {
-				d.finished(key)
-			}
-			d.closeList(setFocus)
 		default:
 			// Pass other key events to the input field.
 			if handler := d.prefix.InputHandler(); handler != nil {
@@ -621,7 +627,7 @@ func (d *DropDown) openList(setFocus func(Primitive)) {
 		}
 	}).SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		switch key := event.Key(); key {
-		case tcell.KeyDown, tcell.KeyUp, tcell.KeyPgDn, tcell.KeyPgUp, tcell.KeyHome, tcell.KeyEnd, tcell.KeyEnter: // Basic list navigation.
+		case tcell.KeyDown, tcell.KeyUp, tcell.KeyPgDn, tcell.KeyPgUp, tcell.KeyHome, tcell.KeyEnd, tcell.KeyEnter, tcell.KeyTab, tcell.KeyBacktab: // Basic list navigation.
 			break
 		case tcell.KeyEscape: // Abort selection.
 			d.closeList(setFocus)
